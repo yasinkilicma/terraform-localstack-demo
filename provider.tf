@@ -1,6 +1,6 @@
 # ============================================================
-# PROVIDER.TF — Terraform'a hangi cloud ile konuşacağını söyler
-# LocalStack: AWS'yi local makinende simüle eder (ücretsiz!)
+# PROVIDER.TF — Tells Terraform which cloud provider to use
+# LocalStack: simulates AWS on your local machine (free!)
 # ============================================================
 
 terraform {
@@ -14,29 +14,29 @@ terraform {
   }
 }
 
-# LocalStack için AWS provider ayarları
+# AWS provider configured for LocalStack
 provider "aws" {
   region = var.aws_region
 
-  # ── LocalStack bağlantı ayarları ─────────────────────────
-  # LocalStack her AWS servisini localhost'ta farklı porta yönlendirir
+  # ── LocalStack connection settings ───────────────────────
+  # LocalStack routes every AWS service to localhost
   endpoints {
     ec2 = "http://localhost:4566"
     iam = "http://localhost:4566"
     s3  = "http://localhost:4566"
   }
 
-  # LocalStack sahte credential kabul eder
+  # LocalStack accepts fake credentials
   access_key = "test"
   secret_key = "test"
 
-  # LocalStack bazı AWS validasyonlarını atlar
+  # Skip validations not needed for LocalStack
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
 
-  # ── Gerçek AWS kullanmak istersen ──────────────────────────
-  # Üstteki tüm 'endpoints' ve 'skip_*' bloklarını sil,
-  # access_key/secret_key satırlarını kaldır,
-  # AWS CLI ile 'aws configure' yap → otomatik okur.
+  # ── To use real AWS instead ───────────────────────────────
+  # Remove all 'endpoints' and 'skip_*' blocks above,
+  # remove access_key/secret_key lines,
+  # run 'aws configure' via AWS CLI → credentials auto-loaded.
 }

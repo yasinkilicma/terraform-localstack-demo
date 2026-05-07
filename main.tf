@@ -1,10 +1,10 @@
 # ============================================================
-# MAIN.TF — Ana altyapı tanımları
-# LocalStack üzerinde çalışır (ücretsiz, local AWS simülasyonu)
+# MAIN.TF — Core infrastructure definitions
+# Runs on LocalStack (free, local AWS simulation)
 # ============================================================
 
 # ── VPC (Virtual Private Cloud) ──────────────────────────────
-# Tüm kaynaklarımızın yaşadığı izole ağ
+# Isolated network where all resources live
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -18,7 +18,7 @@ resource "aws_vpc" "main" {
 }
 
 # ── SUBNET ───────────────────────────────────────────────────
-# VPC içinde bir alt ağ dilimi
+# A subnet slice within the VPC
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr
@@ -33,7 +33,7 @@ resource "aws_subnet" "public" {
 }
 
 # ── INTERNET GATEWAY ─────────────────────────────────────────
-# VPC'nin internete çıkış kapısı
+# The VPC's gateway to the internet
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -45,7 +45,7 @@ resource "aws_internet_gateway" "main" {
 }
 
 # ── ROUTE TABLE ──────────────────────────────────────────────
-# Trafik yönlendirme kuralları
+# Traffic routing rules
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -61,40 +61,40 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Route table'ı subnet'e bağla
+# Associate route table with subnet
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
 
 # ── SECURITY GROUP ────────────────────────────────────────────
-# Firewall kuralları — hangi trafiğe izin verilir?
+# Firewall rules — which traffic is allowed?
 resource "aws_security_group" "web" {
   name        = "${var.project_name}-sg"
-  description = "Web sunucusu icin guvenlik grubu"
+  description = "Security group for web server"
   vpc_id      = aws_vpc.main.id
 
-  # Gelen trafik: SSH (port 22)
+  # Inbound: SSH (port 22)
   ingress {
-    description = "SSH erisimi"
+    description = "SSH access"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Gelen trafik: HTTP (port 80)
+  # Inbound: HTTP (port 80)
   ingress {
-    description = "HTTP web trafigi"
+    description = "HTTP web traffic"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Giden trafik: Her şeye izin ver
+  # Outbound: Allow all
   egress {
-    description = "Tum cikan trafige izin ver"
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -109,18 +109,18 @@ resource "aws_security_group" "web" {
 }
 
 # ── EC2 INSTANCE ─────────────────────────────────────────────
-# Sanal sunucumuz
+# Virtual server
 resource "aws_instance" "web" {
   ami                    = var.ami_id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web.id]
 
-  # Sunucu ilk açılışında çalışacak komutlar
+  # Commands to run on first boot
   user_data = <<-EOF
     #!/bin/bash
-    echo "Merhaba Terraform! Sunucu hazir." > /tmp/hello.txt
-    echo "Proje: ${var.project_name}" >> /tmp/hello.txt
+    echo "Hello from Terraform! Server is ready." > /tmp/hello.txt
+    echo "Project: ${var.project_name}" >> /tmp/hello.txt
   EOF
 
   tags = {

@@ -1,6 +1,7 @@
 # ============================================================
-# TERRAFORM.TFVARS — Değişkenlerin gerçek değerleri
-# ⚠️  Hassas bilgi (şifre, API key) buraya YAZMA → .gitignore'a ekle
+# TERRAFORM.TFVARS — Actual values for variables
+# ⚠️  Never put sensitive data (passwords, API keys) here
+#     unless this file is in .gitignore
 # ============================================================
 
 project_name  = "localstack-demo"
